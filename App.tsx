@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet, Modal, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
+import { View, TextInput, Button, FlatList, Text, StyleSheet, Modal, TouchableWithoutFeedback, TouchableOpacity,Alert } from 'react-native';
 import { Icon, CheckBox } from 'react-native-elements';
+import bd from './src/BD/fireBD';
+import { getFirestore, collection, query, onSnapshot, orderBy,addDoc, updateDoc, doc } from 'firebase/firestore';
+
+type dataProps = {
+  id?:string;
+  ip:string;
+  sec:string;
+  user:string;
+}
 
 const App = () => {
   const [ip, setIp] = useState('');
-  const [data, setData] = useState([
-    { ip: `192.168.140.${Math.floor(Math.random() * 256)}`, sec: 'Secretaria 140', user: 'Usuário 140' },
-    { ip: `192.168.140.${Math.floor(Math.random() * 256)}`, sec: 'Secretaria 140', user: 'Usuário 140' },
-    { ip: `192.168.145.${Math.floor(Math.random() * 256)}`, sec: 'Secretaria 145', user: 'Usuário 145' },
-    { ip: `192.168.145.${Math.floor(Math.random() * 256)}`, sec: 'Secretaria 145', user: 'Usuário 145' },
-  ]);
+  const [data, setData] = useState<dataProps[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newIp, setNewIp] = useState('');
   const [newSec, setNewSec] = useState('');
@@ -19,10 +23,41 @@ const App = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [filteredData, setFilteredData] = useState([...data]);
   const [selectedItem, setSelectedItem] = useState(null);
+  const BD = getFirestore(bd);
+
+
+  const buscaDados =  async () => {  
+ 
+    const q = query(collection(BD,'banco'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const ips:dataProps[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const {ip,sec,user} = doc.data();
+          ips.push({
+            id: doc.id,
+            ip,
+            sec,
+            user
+          });
+      });
+
+      setData(ips);
+      filterData();
+           
+    });
+      
+      return unsubscribe;    
+  }
+
+  useEffect(() =>{        
+      buscaDados();
+  },[])
+
 
   useEffect(() => {
     filterData();
-  }, [filter140, filter145, data, sortOrder]);
+  }, [filter140, filter145,data,sortOrder]);
 
   useEffect(() => {
     handleSearch(ip);
@@ -44,7 +79,7 @@ const App = () => {
     setFilteredData(filteredData);
   };
 
-  const sortIPs = (ips) => {
+  const sortIPs = (ips:any) => {
     return ips.sort((a, b) => {
       const lastOctetA = parseInt(a.ip.split('.')[3]);
       const lastOctetB = parseInt(b.ip.split('.')[3]);
@@ -57,19 +92,7 @@ const App = () => {
     });
   };
 
-  const groupByFaixa = (ips) => {
-    const groupedData = {};
-    ips.forEach(item => {
-      const faixa = item.ip.split('.')[2];
-      if (!groupedData[faixa]) {
-        groupedData[faixa] = [];
-      }
-      groupedData[faixa].push(item);
-    });
-    return groupedData;
-  };
-
-  const handleSearch = (searchText) => {
+  const handleSearch = (searchText:any) => {
     let filteredData = [...data];
     if (searchText) {
       filteredData = data.filter(item => {
@@ -93,18 +116,54 @@ const App = () => {
     setSelectedItem(null);
   };
 
+  async function handleRegisterIP(ip:any,sec:any,user:any){
+  
+    await addDoc(collection(BD, "banco"), {
+      ip,
+      sec,
+      user
+    })
+    .then(() => {
+      buscaDados();
+      return alert("IP registrado com sucesso!")
+
+    }).catch(error => {
+      console.log(error);
+      return Alert.alert('Solicitação', 'Não foi possivel registrar o ip.');
+    })
+  }
+
+ async function handleUpdadeIp(ip:any,sec:any,user:any,ipOlder:any){
+
+         await updateDoc(doc(BD, "banco", ipOlder), {
+          ip,
+          sec,
+          user
+         })
+         .then(() => {
+          buscaDados();
+          return alert("IP atualizado com sucesso!")
+        })
+        .catch((error) => {
+            console.log(error);       
+            alert('Não foi possível atualizar IP.')
+        })
+
+  }
+
   const handleSaveIp = () => {
     if (selectedItem) {
       const newData = data.map(item => {
         if (item === selectedItem) {
-          return { ip: newIp, sec: newSec, user: newUser };
+          return handleUpdadeIp(newIp,newSec,newUser,item.id)     
         }
         return item;
       });
-      setData(newData);
+      
     } else {
-      const newData = [...data, { ip: newIp, sec: newSec, user: newUser }];
-      setData(newData);
+     
+      handleRegisterIP(newIp,newSec,newUser);
+
     }
     setModalVisible(false);
     setNewIp('');
@@ -116,7 +175,7 @@ const App = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
-  const handleItemPress = (item) => {
+  const handleItemPress = (item:any) => {
     setModalVisible(true);
     setSelectedItem(item);
     setNewIp(item.ip);
@@ -167,7 +226,7 @@ const App = () => {
         data={filteredData}
         keyExtractor={(item) => item.ip}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleItemPress(item)} onLongPress={() => handleItemLongPress(item)}>
+          <TouchableOpacity onPress={() => handleItemPress(item)}>
             <View style={styles.itemContainer}>
               <Text style={styles.ipText}>{item.ip}</Text>
               <Text style={styles.secUserText}>{item.sec}</Text>
@@ -235,6 +294,7 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop:5,
     padding: 20,
     backgroundColor: '#FFF',
   },
