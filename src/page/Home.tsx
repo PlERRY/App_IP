@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, FlatList, Text, TouchableWithoutFeedback, TouchableOpacity,Alert } from 'react-native';
+import { View, TextInput, FlatList, Text, TouchableWithoutFeedback, TouchableOpacity, Alert } from 'react-native';
 import { Icon, CheckBox } from 'react-native-elements';
 import bd from '../BD/fireBD';
-import { getFirestore, collection, query, onSnapshot,addDoc, updateDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
 import ModalIP from '../components/ModalIp';
 import styles from '../../Styles';
 
 type dataProps = {
-  id?:string;
-  ip:string;
-  sec:string;
-  user:string;
+  id?: string;
+  ip: string;
+  sec: string;
+  user: string;
 }
 
 const Home = () => {
@@ -27,38 +27,35 @@ const Home = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const BD = getFirestore(bd);
 
-
-  const buscaDados =  async () => {  
- 
-    const q = query(collection(BD,'banco'));
+  const buscaDados = async () => {
+    const q = query(collection(BD, 'banco'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-    const ips:dataProps[] = [];
-      
+      const ips: dataProps[] = [];
+
       querySnapshot.forEach((doc) => {
-        const {ip,sec,user} = doc.data();
-          ips.push({
-            id: doc.id,
-            ip,
-            sec,
-            user
-          });
+        const { ip, sec, user } = doc.data();
+        ips.push({
+          id: doc.id,
+          ip,
+          sec,
+          user
+        });
       });
 
       setData(ips);
       filterData();
-           
     });
-      
-      return unsubscribe;    
+
+    return unsubscribe;
   }
 
-  useEffect(() =>{        
-      buscaDados();
-  },[])
+  useEffect(() => {
+    buscaDados();
+  }, [])
 
   useEffect(() => {
     filterData();
-  }, [filter140, filter145,data,sortOrder]);
+  }, [filter140, filter145, data, sortOrder]);
 
   useEffect(() => {
     handleSearch(ip);
@@ -80,8 +77,8 @@ const Home = () => {
     setFilteredData(filteredData);
   };
 
-  const sortIPs = (ips:any) => {
-    return ips.sort((a:dataProps, b:dataProps) => {
+  const sortIPs = (ips: any) => {
+    return ips.sort((a: dataProps, b: dataProps) => {
       const lastOctetA = parseInt(a.ip.split('.')[3]);
       const lastOctetB = parseInt(b.ip.split('.')[3]);
 
@@ -93,7 +90,7 @@ const Home = () => {
     });
   };
 
-  const handleSearch = (searchText:any) => {
+  const handleSearch = (searchText: any) => {
     let filteredData = [...data];
     if (searchText) {
       filteredData = data.filter(item => {
@@ -120,38 +117,35 @@ const Home = () => {
     setSelectedItem(null);
   };
 
-  async function handleRegisterIP(ip:string,sec:string,user:string){
-  
+  async function handleRegisterIP(ip: string, sec: string, user: string) {
     await addDoc(collection(BD, "banco"), {
       ip,
       sec,
       user
     })
-    .then(() => {
-      buscaDados();
-      return Alert.alert("Solicitação","IP registrado com sucesso!")
-
-    }).catch(error => {
-      console.log(error);
-      return Alert.alert('Solicitação', 'Não foi possivel registrar o ip.');
-    })
+      .then(() => {
+        buscaDados();
+        return Alert.alert("Solicitação", "IP registrado com sucesso!")
+      }).catch(error => {
+        console.log(error);
+        return Alert.alert('Solicitação', 'Não foi possivel registrar o ip.');
+      })
   }
 
-  async function handleUpdadeIp(ip:any,sec:any,user:any,ipOlder:any){
-
-         await updateDoc(doc(BD, "banco", ipOlder), {
-          ip,
-          sec,
-          user
-         })
-         .then(() => {
-          buscaDados();
-          return Alert.alert("Solicitação","IP atualizado com sucesso!")
-        })
-        .catch((error) => {
-            console.log(error);       
-            Alert.alert("Solicitação",'Não foi possível atualizar IP.')
-        })
+  async function handleUpdadeIp(ip: any, sec: any, user: any, ipOlder: any) {
+    await updateDoc(doc(BD, "banco", ipOlder), {
+      ip,
+      sec,
+      user
+    })
+      .then(() => {
+        buscaDados();
+        return Alert.alert("Solicitação", "IP atualizado com sucesso!")
+      })
+      .catch((error) => {
+        console.log(error);
+        Alert.alert("Solicitação", 'Não foi possível atualizar IP.')
+      })
 
   }
 
@@ -159,14 +153,14 @@ const Home = () => {
     if (selectedItem) {
       const newData = data.map(item => {
         if (item === selectedItem) {
-          return handleUpdadeIp(newIp,newSec,newUser,item.id)     
+          return handleUpdadeIp(newIp, newSec, newUser, item.id)
         }
         return item;
       });
-      
+
     } else {
-     
-      handleRegisterIP(newIp,newSec,newUser);
+
+      handleRegisterIP(newIp, newSec, newUser);
 
     }
     setModalVisible(false);
@@ -179,15 +173,16 @@ const Home = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
-  const handleItemPress = (item:any) => {
+  const handleItemPress = (item: any) => {
     setModalVisible(true);
     setSelectedItem(item);
     setNewIp(item.ip);
     setNewSec(item.sec);
     setNewUser(item.user);
   };
-
+  console.log("HOME Selected item:", selectedItem);
   return (
+
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Lista de IPs</Text>
@@ -204,6 +199,20 @@ const Home = () => {
         />
         <Icon name='add-circle' type='ionicon' color='#4B0082' size={45} onPress={handleAddIp} />
       </View>
+
+      <ModalIP
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        handleSaveIp={handleSaveIp}
+        newIp={newIp}
+        setNewIp={setNewIp}
+        newSec={newSec}
+        setNewSec={setNewSec}
+        newUser={newUser}
+        setNewUser={setNewUser}
+        isUpdate={!!selectedItem} // Sinalize que é uma atualização
+        existingIp={selectedItem ? selectedItem.ip : ''} // Passe o IP existente para o ModalIP
+      />
 
       <View style={styles.filtersContainer}>
         <View style={styles.checkboxContainer}>
@@ -240,17 +249,6 @@ const Home = () => {
         )}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
       />
-     <ModalIP
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-        handleSaveIp={handleSaveIp}
-        newIp={newIp}
-        setNewIp={setNewIp}
-        newSec={newSec}
-        setNewSec={setNewSec}
-        newUser={newUser}
-        setNewUser={setNewUser}
-     />
     </View>
   );
 };

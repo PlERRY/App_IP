@@ -1,6 +1,5 @@
-// ModalIP.tsx
-import React from 'react';
-import { Modal, View, TouchableWithoutFeedback, Button, Text, TextInput } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Modal, View, TouchableWithoutFeedback, Button, Text, TextInput, Alert } from 'react-native';
 import styles from '../../Styles';
 
 interface ModalIPProps {
@@ -13,6 +12,8 @@ interface ModalIPProps {
   setNewSec: (text: string) => void;
   newUser: string;
   setNewUser: (text: string) => void;
+  isUpdate: boolean; // Propriedade para indicar se é uma atualização
+  existingIp: string; // Propriedade para armazenar o IP existente (quando é uma atualização)
 }
 
 const ModalIP: React.FC<ModalIPProps> = ({
@@ -25,7 +26,35 @@ const ModalIP: React.FC<ModalIPProps> = ({
   setNewSec,
   newUser,
   setNewUser,
+  isUpdate,
+  existingIp,
 }) => {
+  const [confirmationNeeded, setConfirmationNeeded] = useState(false);
+
+  useEffect(() => {
+    if (modalVisible && isUpdate) {
+      setNewIp(existingIp); // Preenche o campo de IP com o IP existente ao editar
+    } else if (modalVisible) {
+      setNewIp('192.168.14');
+    }
+  }, [modalVisible, isUpdate, existingIp]);
+
+  const handleSaveAndCheckIp = () => {
+    const ipParts = newIp.split('.').map(part => parseInt(part));
+
+    if (ipParts.some(part => isNaN(part) || part < 0 || part > 255)) {
+      Alert.alert('Solicitação', 'Por favor, insira um IP válido.');
+      return;
+    }
+
+    if (ipParts[3] === 0 || ipParts[3] === 255) {
+      Alert.alert('Solicitação', 'Os IPs com o último octeto 0 ou 255 são reservados para a rede e não podem ser atribuídos a um host.');
+      return;
+    }
+
+    handleSaveIp();
+  };
+
   return (
     <Modal
       animationType='fade'
@@ -47,8 +76,17 @@ const ModalIP: React.FC<ModalIPProps> = ({
               style={styles.modalTextInput}
               value={newIp}
               onChangeText={setNewIp}
-              placeholder='Digite o IP'
+              placeholder='192.168.14.XXX'
               placeholderTextColor='#696969'
+              keyboardType='numeric'
+              maxLength={15}
+              onSubmitEditing={handleSaveAndCheckIp}
+              onFocus={() => {
+                if (!newIp.includes('192.168.14')) {
+                  setNewIp('192.168.14');
+                }
+              }}
+              editable={!isUpdate} // Torna o campo de IP não editável se for uma atualização
             />
           </View>
           <View style={styles.modalInput}>
@@ -73,7 +111,7 @@ const ModalIP: React.FC<ModalIPProps> = ({
           </View>
           <View style={styles.modalButtons}>
             <Button title='Fechar' onPress={() => setModalVisible(false)} color='#4B0082' />
-            <Button title='Salvar' onPress={handleSaveIp} color='#4B0082' />
+            <Button title='Salvar' onPress={handleSaveAndCheckIp} color='#4B0082' />
           </View>
         </View>
       </View>
