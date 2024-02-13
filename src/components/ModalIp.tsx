@@ -13,6 +13,7 @@ interface ModalIPProps {
   newUser: string;
   setNewUser: (text: string) => void;
   handleDeleteIp: () => void;
+  selected : any;
 }
 
 const ModalIP: React.FC<ModalIPProps> = ({
@@ -25,7 +26,8 @@ const ModalIP: React.FC<ModalIPProps> = ({
   setNewSec,
   newUser,
   setNewUser,
-  handleDeleteIp
+  handleDeleteIp,
+  selected
 }) => {
   const [confirmationNeeded, setConfirmationNeeded] = useState(false);
 
@@ -96,7 +98,9 @@ const ModalIP: React.FC<ModalIPProps> = ({
           </View>
           <View style={styles.modalButtons}>
             <Button title='Fechar' onPress={() => setModalVisible(false)} color='#4B0082' />
+           {selected !== null ?
             <Button title='Deletar' onPress={handleDeleteIp} color="#4B0082"/>
+            : null}
             <Button title='Salvar' onPress={handleSaveAndCheckIp} color='#4B0082' />
           </View>
         </View>

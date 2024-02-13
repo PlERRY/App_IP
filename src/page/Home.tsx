@@ -237,6 +237,7 @@ const Home = () => {
         newUser={newUser}
         setNewUser={setNewUser}
         handleDeleteIp={filterDelete}
+        selected={selectedItem}
       />
 
       <View style={styles.filtersContainer}>
