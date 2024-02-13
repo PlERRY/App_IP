@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, TextInput, FlatList, Text, TouchableWithoutFeedback, TouchableOpacity, Alert } from 'react-native';
 import { Icon, CheckBox } from 'react-native-elements';
 import bd from '../BD/fireBD';
-import { getFirestore, collection, query, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, query, onSnapshot, addDoc, updateDoc, doc,deleteDoc } from 'firebase/firestore';
 import ModalIP from '../components/ModalIp';
 import styles from '../../Styles';
 
@@ -110,7 +110,7 @@ const Home = () => {
   };
 
   const handleAddIp = () => {
-    setNewIp('')
+    setNewIp('192.168.14') //parte to ip ja vai como padrao
     setNewSec('')
     setNewUser('')
     setModalVisible(true);
@@ -180,7 +180,33 @@ const Home = () => {
     setNewSec(item.sec);
     setNewUser(item.user);
   };
-  console.log("HOME Selected item:", selectedItem);
+
+  function filterDelete(){
+    if (selectedItem) {
+        const newData = data.map(item => {     
+            if(item === selectedItem){
+                return handleDeleteIp(item.id)
+            }
+          return item;
+        });
+      }
+  }
+ 
+  async function handleDeleteIp(id:any){
+ 
+   await deleteDoc(doc(BD, "banco", id))
+   .then(() => {
+    Alert.alert('Solicitação','deletado com sucesso')
+    setModalVisible(false);
+    setNewIp('');
+    setNewSec('');
+    setNewUser('');
+   })
+   .catch(() => {
+    alert('deu erro')
+   })
+  }
+
   return (
 
     <View style={styles.container}>
@@ -210,8 +236,7 @@ const Home = () => {
         setNewSec={setNewSec}
         newUser={newUser}
         setNewUser={setNewUser}
-        isUpdate={!!selectedItem} // Sinalize que é uma atualização
-        existingIp={selectedItem ? selectedItem.ip : ''} // Passe o IP existente para o ModalIP
+        handleDeleteIp={filterDelete}
       />
 
       <View style={styles.filtersContainer}>

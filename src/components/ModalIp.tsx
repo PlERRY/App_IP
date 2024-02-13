@@ -12,8 +12,7 @@ interface ModalIPProps {
   setNewSec: (text: string) => void;
   newUser: string;
   setNewUser: (text: string) => void;
-  isUpdate: boolean; // Propriedade para indicar se é uma atualização
-  existingIp: string; // Propriedade para armazenar o IP existente (quando é uma atualização)
+  handleDeleteIp: () => void;
 }
 
 const ModalIP: React.FC<ModalIPProps> = ({
@@ -26,18 +25,9 @@ const ModalIP: React.FC<ModalIPProps> = ({
   setNewSec,
   newUser,
   setNewUser,
-  isUpdate,
-  existingIp,
+  handleDeleteIp
 }) => {
   const [confirmationNeeded, setConfirmationNeeded] = useState(false);
-
-  useEffect(() => {
-    if (modalVisible && isUpdate) {
-      setNewIp(existingIp); // Preenche o campo de IP com o IP existente ao editar
-    } else if (modalVisible) {
-      setNewIp('192.168.14');
-    }
-  }, [modalVisible, isUpdate, existingIp]);
 
   const handleSaveAndCheckIp = () => {
     const ipParts = newIp.split('.').map(part => parseInt(part));
@@ -81,12 +71,7 @@ const ModalIP: React.FC<ModalIPProps> = ({
               keyboardType='numeric'
               maxLength={15}
               onSubmitEditing={handleSaveAndCheckIp}
-              onFocus={() => {
-                if (!newIp.includes('192.168.14')) {
-                  setNewIp('192.168.14');
-                }
-              }}
-              editable={!isUpdate} // Torna o campo de IP não editável se for uma atualização
+             
             />
           </View>
           <View style={styles.modalInput}>
@@ -111,6 +96,7 @@ const ModalIP: React.FC<ModalIPProps> = ({
           </View>
           <View style={styles.modalButtons}>
             <Button title='Fechar' onPress={() => setModalVisible(false)} color='#4B0082' />
+            <Button title='Deletar' onPress={handleDeleteIp} color="#4B0082"/>
             <Button title='Salvar' onPress={handleSaveAndCheckIp} color='#4B0082' />
           </View>
         </View>
