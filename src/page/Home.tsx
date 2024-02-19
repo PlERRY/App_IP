@@ -118,18 +118,36 @@ const Home = () => {
   };
 
   async function handleRegisterIP(ip: string, sec: string, user: string) {
-    await addDoc(collection(BD, "banco"), {
-      ip,
-      sec,
-      user
-    })
-      .then(() => {
-        buscaDados();
-        return Alert.alert("Solicitação", "IP registrado com sucesso!")
-      }).catch(error => {
-        console.log(error);
-        return Alert.alert('Solicitação', 'Não foi possivel registrar o ip.');
+    let checked = false;
+
+    try {
+      
+      data.map((item) => {
+        if(item.ip === ip){
+            Alert.alert('Solicitação',`Este ip ja esta cadastrado em: \nSecretaria: ${item.sec}\nUsuário: ${item.user}` )
+            return checked = true;
+        }
+        return;
       })
+  
+      if(checked === false){
+  
+        await addDoc(collection(BD, "banco"), {
+          ip,
+          sec,
+          user
+        })
+          .then(() => {
+            buscaDados();
+            return Alert.alert("Solicitação", "IP registrado com sucesso!")
+          }).catch(error => {
+            console.log(error);
+            return Alert.alert('Solicitação', 'Não foi possivel registrar o ip.');
+          })
+      }
+    } catch (error) {
+      alert("erro")
+    }
   }
 
   async function handleUpdadeIp(ip: any, sec: any, user: any, ipOlder: any) {
